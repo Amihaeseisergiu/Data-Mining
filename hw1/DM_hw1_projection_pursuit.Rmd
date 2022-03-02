@@ -1,11 +1,11 @@
 ---
-title: "R Notebook"
+title: "Task 1"
 output:
   html_document:
     df_print: paged
 ---
 
-# Task 1 - Exploratory analysis of the data
+# Exploratory analysis of the data - Projection Pursuit
 
 ### [Heart Disease Dataset](https://archive.ics.uci.edu/ml/datasets/heart+disease)
 
@@ -21,14 +21,14 @@ library("gifski")
 library("knitr")
 library("tourr")
 
-data <- read.csv(file = 'D:\\Facultate\\Data-Mining\\heart.csv')
+data <- read.csv(file = 'D:\\Facultate\\Data-Mining\\hw1\\heart.csv')
 ```
 
 
 ## Projection Pursuit
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE, error=FALSE}
-render_gif(data[, -ncol(data)], grand_tour(d=2), display_xy())
+render_gif(data[, -ncol(data)], grand_tour(d=2), display_xy(), frames=200)
 ```
 ```{r}
 knitr::include_graphics('./animation.gif')
