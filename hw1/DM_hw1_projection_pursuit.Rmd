@@ -28,7 +28,7 @@ data <- read.csv(file = 'D:\\Facultate\\Data-Mining\\hw1\\heart.csv')
 ## Projection Pursuit
 
 ```{r, results=FALSE, message=FALSE, warning=FALSE, error=FALSE}
-render_gif(data[, -ncol(data)], grand_tour(d=2), display_xy(), frames=200)
+render_gif(data[, -ncol(data)], grand_tour(d=2), display_xy(col=data$target), frames=200)
 ```
 ```{r}
 knitr::include_graphics('./animation.gif')
