@@ -22,24 +22,30 @@ data = data[,!(names(data) %in% c("ï..age"))]
 names(data)
 copy = data.frame(data)
 ```
+
 ### Numerical attributes
+
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 numerical_attributes = c("age", "trestbps", "chol", "oldpeak", "thalach")
 numerical_attributes
 ```
+
 #### Age
-- We observed in the previous task that there age variables seems to follow two normal distributions, so we split the age into two categorical variables
-- Age < 50 -> young
-- Age >= 50 -> old 
+
+-   We observed in the previous task that there age variables seems to follow two normal distributions, so we split the age into two categorical variables
+-   Age \< 50 -\> young
+-   Age \>= 50 -\> old
 
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 data$age[data$age < 50] = "young"
 data$age[!data$age %in% c("young")] = "old"
 as.data.frame(table(data$age))
 ```
+
 #### Trestbps
-- Trestbps is the resting blood pressure
-- From a medical point of view, values bellow 120 mm are normal, while those that are higher can indicate problems.
+
+-   Trestbps is the resting blood pressure
+-   From a medical point of view, values bellow 120 mm are normal, while those that are higher can indicate problems.
 
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 data$trestbps[data$trestbps < 120] = "normal blood pressure"
@@ -48,8 +54,9 @@ as.data.frame(table(data$trestbps))
 ```
 
 #### Chol
-- Cholesterol values are normal if between 125 mg/dl and 200 mg/dl, otherwise they are suspicious.
-- In our case we only have halues higher than the lower required value, so we only check for values bigger than 200 mg/dl.
+
+-   Cholesterol values are normal if between 125 mg/dl and 200 mg/dl, otherwise they are suspicious.
+-   In our case we only have halues higher than the lower required value, so we only check for values bigger than 200 mg/dl.
 
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 data$chol[data$chol < 200] = "normal chol"
@@ -57,20 +64,22 @@ data$chol[!data$chol %in% c("normal chol")] = "high chol"
 as.data.frame(table(data$chol))
 ```
 
-#### Thalac 
-- The maximum heart rate achieved
-- According to medical expertise, the normal value should be near 220 - age. However, the method is inaccurate already at an age of 30–40 years, which is the majority of our population. So we decided to follow this table:
-  * 20 years: 100 to 170 beats per minute
-  * 30 years: 95 to 162 beats per minute
-  * 35 years: 93 to 157 beats per minute  
-  * 40 years: 90 to 153 beats per minute  
-  * 45 years: 88 to 149 beats per minute
-  * 50 years: 85 to 145 beats per minute
-  * 55 years: 83 to 140 beats per minute
-  * 60 years: 80 to 136 beats per minute
-  * 65 years: 78 to 132 beats per minute
-  * 70 years: 75 to 128 beats per minute
-- Values that are within the bounds are normal values, while higher or lower represent anomalies. 
+#### Thalac
+
+-   The maximum heart rate achieved
+-   According to medical expertise, the normal value should be near 220 - age. However, the method is inaccurate already at an age of 30-40 years, which is the majority of our population. So we decided to follow this table:
+    -   20 years: 100 to 170 beats per minute
+    -   30 years: 95 to 162 beats per minute
+    -   35 years: 93 to 157 beats per minute\
+    -   40 years: 90 to 153 beats per minute\
+    -   45 years: 88 to 149 beats per minute
+    -   50 years: 85 to 145 beats per minute
+    -   55 years: 83 to 140 beats per minute
+    -   60 years: 80 to 136 beats per minute
+    -   65 years: 78 to 132 beats per minute
+    -   70 years: 75 to 128 beats per minute
+-   Values that are within the bounds are normal values, while higher or lower represent anomalies.
+
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 assign_value = function(index, low, high) {
   if (copy$thalach[index] < low) {
@@ -109,8 +118,9 @@ as.data.frame(table(data$thalach))
 ```
 
 #### Oldpeak
-- ST depression induced by exercise relative to rest.
-- We don't know what that means, so we decided to split the values into 3 equal sized groups.
+
+-   ST depression induced by exercise relative to rest.
+-   We don't know what that means, so we decided to split the values into 3 equal sized groups.
 
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 sorted_values = sort(data$oldpeak)
@@ -141,90 +151,157 @@ data$cp = paste0("cp", data$cp)
 ```
 
 ### We visualize the new data
+
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 data
 ```
 
-### 
+### Convert data to transactions
+
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 library(arules)
+library(arulesViz)
+
 trans <- arules::transactions(data)
 trans
 ```
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+### We visualize the top 20 most frequent items (that have the highest support).
+  We can see that the majority of the individuals (>80%) don't have diabetes (fbs=0), but have a high cholestelor level, and high blood pressure. Also most of them are old (>50) with 70% probability.
+
+```{r}
+itemFrequencyPlot(trans, topN=20)
+```
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
 rules_descr = c()
 for (i in c(0.1, 0.2, 0.3, 0.4, 0.5)) {
   for (j in c(0.7, 0.8, 0.9, 1.0)) {
     rules <- apriori(trans, supp = i, conf = j, target = "rules", parameter = list(minlen = 2))
-    aux <- c(paste0("Supp = ", i, " Conf = ", j), rules)
-    rules_descr <- c(rules_descr, aux)
+    rules_descr <- rbind(rules_descr, c(paste0("Supp = ", i, " Conf = ", j), capture.output(print(rules))))
   }
 }
 
 ```
 
-
 #### We can see that we have rules with 100% confidence only for support = 0.1.
-- We also have 1 rule with confidence of 0.9 for support = 0.4.
-- And 28 rules with confidence 0.8 for support = 0.5
+
+-   We also have 1 rule with confidence of 0.9 for support = 0.4.
+-   And 28 rules with confidence 0.8 for support = 0.5
+
 ```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
 rules_descr
 ```
-#### Important rules we find interesting:
-- If a person is male, he might also have high blood pressure
-- If a person is male, he might also have fbs = 0 (not enough blood sugar)
-- If a person is male, he might also have high chol
-- Old people might have high blood pressure
-- Old people might have high chol
-- High chol might come with high blood pressure
 
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+#### Important rules we find interesting:
+
+-   If a person is male, he might also have high blood pressure
+-   If a person is male, he might also have fbs = 0 (not enough blood sugar)
+-   If a person is male, he might also have high chol
+-   Old people might have high blood pressure
+-   Old people might have high chol
+-   High chol might come with high blood pressure
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
 rules <- apriori(data, supp = 0.5, conf = 0.8, target = "rules", parameter = list(minlen = 2))
-values = inspect(head(rules, n=31, by = "confidence", decreasing = TRUE))
+```
+```{r}
+result = DATAFRAME(rules, separate=FALSE)
+result[order(-result$confidence),]
 ```
 
+```{r}
+plot(rules, engine = "html")
+```
 
-- We can observe that there is one rule with support = 0.4 and conf = 0.9.
-- Slope is a variable which measures the ST depression.
-- So if a person has slope = 2, then he might also have high heart rate with a confidence of 0.9.
+```{r}
+plot(rules, method = "graph", engine = "html")
+```
 
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+-   We can observe that there is one rule with support = 0.4 and conf = 0.9.
+-   Slope is a variable which measures the ST depression.
+-   So if a person has slope = 2, then he might also have high heart rate with a confidence of 0.9.
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
 rules <- apriori(data, supp = 0.4, conf = 0.9, target = "rules", parameter = list(minlen = 2))
-inspect(rules)
+```
+
+```{r}
+result = DATAFRAME(rules, separate=FALSE)
+result[order(-result$confidence),]
+```
+### For support=0.3 and confidence=0.9 we don't have any interesting rules
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
+rules <- apriori(data, supp = 0.3, conf = 0.9, target = "rules", parameter = list(minlen = 2))
+```
+
+```{r}
+plot(rules, engine = "html")
+```
+
+### Interpretation
+  We can see that 10% of the people, without chest pain (cp=0), high cholesterol, high blood pressure, and that are old, don't have any heart problems with 100% confidence.
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
+rules <- apriori(data, supp = 0.1, conf = 1, target = "rules", parameter = list(minlen = 2))
+```
+
+```{r}
+plot(rules, engine = "html")
 ```
 
 #### Interpretation:
-- When using support = 0.2 we had too many rules, so we limited ourselves to support = 0.25. 
-- We can see that we have 4 rules with a high confidence.
-- All of these rules have target = 1, which is normal, because on our dataset it is easier for a set of variables to imply that a patient suffers from heart disease than for to clearly say that a patient is healthy.
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+
+-   When using support = 0.2 we had too many rules, so we limited ourselves to support = 0.25.
+-   We can see that we have 4 rules with a high confidence.
+-   All of these rules have target = 1, which is normal, because on our dataset it is easier for a set of variables to imply that a patient suffers from heart disease than for to clearly say that a patient is healthy.
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
 targetItems = grep("^target=", itemLabels(trans), value=TRUE)
-targetItems
 rules = apriori(trans, supp = 0.25, conf = 0.9, target = "rules", parameter = list(minlen = 2), appearance = list(rhs = targetItems))
-inspect(head(rules, n=37, by = "confidence", decreasing = TRUE))
 ```
 
+```{r}
+result = DATAFRAME(rules, separate=FALSE)
+result[order(-result$confidence),]
+```
 
-- These are rules which have a higher support but a lower confidence
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+```{r}
+plot(rules, method = "graph", engine = "html")
+```
+
+-   These are rules which have a higher support but a lower confidence
+
+```{r, results="hide", message=FALSE, warning=FALSE, error=FALSE}
 rules = apriori(trans, supp = 0.4, conf = 0.7, target = "rules", parameter = list(minlen = 2), appearance = list(rhs = targetItems))
-inspect(head(rules, n=37, by = "confidence", decreasing = TRUE))
 ```
-- Here we have one of the few cases in which we have an association rule with target = 0. 
-- We have a confidence of 0.7 to be healthy if we do not have chest pains.
-```{r, results="markup", message=FALSE, warning=FALSE, error=FALSE}
+```{r}
+result = DATAFRAME(rules, separate=FALSE)
+result[order(-result$confidence),]
+```
+
+```{r}
+plot(rules, method = "graph", engine = "html")
+```
+
+-   Here we have one of the few cases in which we have an association rule with target = 0.
+-   We have a confidence of 0.7 to be healthy if we do not have chest pains.
+
+```{r results="hide", error=FALSE, message=FALSE, warning=FALSE}
 targetItems = grep("^target=target0", itemLabels(trans), value=TRUE)
 rules = apriori(trans, supp = 0.3, conf = 0.7, target = "rules", parameter = list(minlen = 2), appearance = list(rhs = targetItems))
-inspect(head(rules, n=37, by = "confidence", decreasing = TRUE))
+```
+```{r}
+result = DATAFRAME(rules, separate=FALSE)
+result[order(-result$confidence),]
 ```
 
 ## Conclusion:
-- From the above analysis we see that it is hard to have a set of variables in which on the right side target = 0.
-- That means that we can't tell for sure if a person is healthy according to the clinical indices, because he might suffer from this disease due to other factors.
-- Moreover, we do not have very clear indicators with high support and high confidence. The association rules with confidence > 0.9 have a support close to 0.25, while the rules with support > 0.4 have confidence close to 0.7.
-- However, we can still create weak classifiers which use the above shown groups and we extracted some good associations
-  * No chest pain means one is healthy with a confidence of 0.7 and support 0.3
-  * No exercise induced angina and high HR means hearth disease with a confidence of 0.7 and support 0.4
-  * exang=exang0, ca=ca0, thal=thal2 means hearth disease with a confidence of 0.9 and a support close to 0.3
 
-
+-   From the above analysis we see that it is hard to have a set of variables in which on the right side target = 0.
+-   That means that we can't tell for sure if a person is healthy according to the clinical indices, because he might suffer from this disease due to other factors.
+-   Moreover, we do not have very clear indicators with high support and high confidence. The association rules with confidence \> 0.9 have a support close to 0.25, while the rules with support \> 0.4 have confidence close to 0.7.
+-   However, we can still create weak classifiers which use the above shown groups and we extracted some good associations
+    -   No chest pain means one is healthy with a confidence of 0.7 and support 0.3
+    -   No exercise induced angina and high HR means hearth disease with a confidence of 0.7 and support 0.4
+    -   exang=exang0, ca=ca0, thal=thal2 means hearth disease with a confidence of 0.9 and a support close to 0.3
